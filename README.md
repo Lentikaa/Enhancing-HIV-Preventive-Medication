@@ -6,7 +6,7 @@ The DP pill, a form of pre-exposure prophylaxis (PrEP), when taken daily, reduce
 The initial distribution of DP pills is successful, but the adherence rates drop significantly after the first month.
 A significant drop-off in continuation rates is observed from the first to the second month.
 A consistent 20% adherence rate is observed from the second to the third month, indicating a need for intervention to improve long-term adherence.
-# Recommended INterventions
+# Recommended Interventions
 Daily Reminders: Send daily SMS or app notifications to patients reminding them to take their DP pills. These reminders can include motivational messages and tips on the importance of adherence.
 Monthly Reminders: Send monthly reminders for clinic visits to refill DP prescriptions. These reminders can be personalized based on the patient’s initial visit date and include information on the nearest clinic location.
 Educational Content: Include educational content in the reminders to address any misconceptions or stigma associated with HIV prevention and the use of DP pills.
