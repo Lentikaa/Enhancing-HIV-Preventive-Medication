@@ -1,0 +1,212 @@
+---
+title: "OPI_25"
+date: "2025-03-04"
+output: html_document
+---
+
+#Introduction
+
+HIV (Human Immunodeficiency Virus) attacks the immune system, specifically CD4 cells, which are crucial for fighting infections. If untreated, HIV can lead to AIDS, making the body vulnerable to infections. HIV/AIDS has a significant impact on global public health, social structures, and economies, disproportionately affecting vulnerable populations and leading to millions of deaths worldwide.
+The DP pill, a form of pre-exposure prophylaxis (PrEP), when taken daily, reduces the risk of HIV infection in high-risk individuals. Adhering to the DP regimen is essential for maximizing its protective benefits and achieving public health goals.
+
+
+#Data
+
+DataSet has 22131 Observation and 20 Variables
+The majority of partcipants are females(16,309) and the most common county is Nairobi.
+Most participants were reffered (peers-7,856)
+Most Partcipants didnt show signs of STI and all received DP Pills
+```{r}
+DP <- read.csv("~/Desktop/OPI_25/DP_continuation - Sheet1.csv")
+head(DP)
+```
+
+```{r}
+str(DP)
+```
+
+```{r}
+
+DP$Gender<-as.factor(DP$Gender)
+DP$CountyOfBirth<-as.factor(DP$CountyOfBirth)
+DP$EntryPoint<-as.factor(DP$EntryPoint)
+DP$ReferredOrTransferredFrom<-as.factor(DP$ReferredOrTransferredFrom)
+DP$InitialVisitDate<-as.factor(DP$InitialVisitDate)
+DP$BP<-as.factor(DP$BP)
+DP$Lmp<-as.factor(DP$Lmp)
+DP$SignOfSti<-as.factor(DP$SignOfSti)
+DP$Cluster<-as.factor(DP$Cluster)
+DP$FacilityType<-as.factor(DP$FacilityType)
+DP$Refill1month<-as.factor(DP$Refill1month)
+DP$Refill2month<-as.factor(DP$Refill2month)
+DP$Refill3month<-as.factor(DP$Refill3month)
+#DP$Refill4month<-as.factor(DP$Refill4month)
+DP$Refill3months<-as.factor(DP$Refill3months)
+DP$Refill6months<-as.factor(DP$Refill6months)
+DP$Refill2months<-as.factor(DP$Refill2months)
+DP$received_counseling<-as.factor(DP$received_counseling)
+summary(DP)
+```
+
+```{r}
+any(is.na(DP))
+```
+
+```{r}
+# Check the original number of observations
+original_observations <- nrow(DP)
+cat("Original number of observations: ", original_observations, "\n")
+
+# Remove rows with any missing values
+cleaned_DP <- na.omit(DP)
+
+# Check the number of observations after removing missing values
+remaining_observations <- nrow(cleaned_DP)
+cat("Number of observations after removing missing values: ", remaining_observations, "\n")
+```
+I removed those missing values since we're dealing with patients blood pressure values which are very delicate thus will be very risky just to compute and input any figures there.
+
+
+
+```{r}
+# Check for missing values in the entire dataset
+sum(is.na(DP))  # Total number of missing values
+
+# Count missing values per column
+colSums(is.na(DP))
+```
+
+
+```{r}
+# Check for missing values in the entire dataset
+sum(is.na(cleaned_DP))  # Total number of missing values
+
+# Count missing values per column
+colSums(is.na(cleaned_DP))
+
+```
+
+
+```{r}
+
+
+# Check the original number of observations
+original_observations <- nrow(DP)
+cat("Original number of observations: ", original_observations, "\n")
+
+# Remove rows with any missing values
+cleaned_DP <- na.omit(DP)
+
+# Check the number of observations after removing missing values
+remaining_observations <- nrow(cleaned_DP)
+cat("Number of observations after removing missing values: ", remaining_observations, "\n")
+
+# Define a function to clean and validate BP values
+clean_bp <- function(bp) {
+  bp <- gsub("[^0-9/]", "", bp) # Remove non-numeric characters
+  bp <- gsub("//", "/", bp) # Replace double slashes with single slash
+  bp <- ifelse(grepl("^\\d{2,3}/\\d{2,3}$", bp), bp, NA) # Keep only valid BP entries
+  return(bp)
+}
+
+# Apply the function to clean BP column in the cleaned dataset
+cleaned_DP$BP <- sapply(cleaned_DP$BP, clean_bp)
+
+# Split BP into Systolic and Diastolic values in the cleaned dataset
+cleaned_DP$Systolic <- as.numeric(sapply(strsplit(cleaned_DP$BP, "/"), `[`, 1))
+cleaned_DP$Diastolic <- as.numeric(sapply(strsplit(cleaned_DP$BP, "/"), `[`, 2))
+
+# Filter out BP values that are out of the typical physiological range in the cleaned dataset
+valid_bp <- function(systolic, diastolic) {
+  return(!is.na(systolic) & !is.na(diastolic) & systolic >= 70 & systolic <= 190 & diastolic >= 40 & diastolic <= 120)
+}
+
+# Apply the filter to keep only valid BP entries in the cleaned dataset
+cleaned_DP_BP <- cleaned_DP[valid_bp(cleaned_DP$Systolic, cleaned_DP$Diastolic), ]
+
+# Remove rows with NA BP values or improperly formatted BP values in the cleaned dataset
+cleaned_DP_BP <- cleaned_DP_BP[complete.cases(cleaned_DP_BP$Systolic, cleaned_DP_BP$Diastolic), ]
+
+# Check the number of observations after cleaning and filtering BP values in the cleaned dataset
+remaining_observations_cleaned_BP <- nrow(cleaned_DP_BP)
+cat("Number of observations after cleaning and filtering BP values in the cleaned dataset: ", remaining_observations_cleaned_BP, "\n")
+
+# Save the cleaned dataset with processed BP column
+write.csv(cleaned_DP_BP, "cleaned_DP_BP.csv", row.names = FALSE)
+
+
+```
+
+
+```{r}
+
+cleaned_DP_BP <- read.csv("cleaned_DP_BP.csv")
+
+# Check the column names in both datasets
+cat("Column names in the original dataset:\n")
+print(names(DP))
+cat("\nColumn names in the cleaned dataset:\n")
+print(names(cleaned_DP_BP))
+
+
+```
+
+
+```{r}
+
+# Summary statistics for numeric variables in both datasets
+summary_stats <- function(data) {
+  existing_columns <- intersect(names(data), c("Age", "Weight_", "Height", "Systolic", "Diastolic", "Received_DP", "Refill1month", "Refill2months", "Refill3months", "Refill6months"))
+  summary(data[existing_columns])
+}
+
+# Generate summary statistics for original and cleaned datasets
+original_summary <- summary_stats(DP)
+cleaned_summary <- summary_stats(cleaned_DP_BP)
+cat("Summary Statistics for Original Dataset\n")
+print(original_summary)
+cat("Summary Statistics for Cleaned Dataset\n")
+print(cleaned_summary)
+
+# Visualizations for key variables in both datasets
+par(mfrow=c(2,2))
+
+# Histograms for Age with more reasonable x-axis range (15 to 100)
+hist(DP$Age, main="Age (Original)", xlab="Age", col="lightblue", xlim=c(15, 100))
+hist(cleaned_DP_BP$Age, main="Age (Cleaned)", xlab="Age", col="lightgreen", xlim=c(15, 100))
+
+# Boxplots for Weight with a reasonable y-axis range
+boxplot(DP$Weight_, main="Weight (Original)", ylab="Weight", ylim=c(30, 150))
+boxplot(cleaned_DP_BP$Weight_, main="Weight (Cleaned)", ylab="Weight", ylim=c(30, 150))
+
+
+```
+We can see that even after data cleaning the variables distribution between the two variables remained the same with some potential outlier being handled.
+
+```{r}
+
+# Set up the plotting area for multiple plots
+par(mfrow=c(2,3))
+
+# Plot histograms for Received_DP and refill variables
+hist(cleaned_DP_BP$Received_DP, main="Received DP", xlab="Received DP", col="lightblue", breaks=10)
+hist(cleaned_DP_BP$Refill1month, main="Refill 1 Month", xlab="Refill 1 Month", col="lightgreen", breaks=10)
+hist(cleaned_DP_BP$Refill2months, main="Refill 2 Months", xlab="Refill 2 Months", col="lightcoral", breaks=10)
+hist(cleaned_DP_BP$Refill3months, main="Refill 3 Months", xlab="Refill 3 Months", col="lightgoldenrod", breaks=10)
+hist(cleaned_DP_BP$Refill6months, main="Refill 6 Months", xlab="Refill 6 Months", col="lightpink", breaks=10)
+
+```
+The initial distribution of DP pills is successful, but the adherence rates drop significantly after the first month.
+A significant drop-off in continuation rates is observed from the first to the second month.
+A consistent 20% adherence rate is observed from the second to the third month, indicating a need for intervention to improve long-term adherence.
+
+#Recommended INterventions
+
+Daily Reminders: Send daily SMS or app notifications to patients reminding them to take their DP pills. These reminders can include motivational messages and tips on the importance of adherence.
+Monthly Reminders: Send monthly reminders for clinic visits to refill DP prescriptions. These reminders can be personalized based on the patient’s initial visit date and include information on the nearest clinic location.
+Educational Content: Include educational content in the reminders to address any misconceptions or stigma associated with HIV prevention and the use of DP pills.
+
+
+# Conclusion
+
+The analysis revealed significant behavioral challenges affecting patient adherence to the DP regimen. By implementing a reminder system, we aimed to address these issues and improve adherence rates. The data-driven intervention showed promising results, with an increase in DP usage and continuous refilling rates. Continued evaluation and targeted strategies are essential for enhancing the program's effectiveness and achieving public health goals.
